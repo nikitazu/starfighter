@@ -115,6 +115,16 @@
     (dolist (t2 trash2)
       (emitter-remove t2 e2))))
 
+(defclass enemies-emitter (meteor-emitter)
+  ())
+
+(defmethod emitter-formula ((p pos) (e enemies-emitter))
+  (pos-down p (emitter-speed e))
+  (pos-left p (if (zerop (random 2))
+			  1
+			  -1)))
+
+
 ;;; Bullet emitter
 ;;; ==============
 (defclass bullet-emitter (meteor-emitter)
@@ -124,7 +134,7 @@
   (let ((owner (slot-value e 'owner)))
     (actor (pos-x owner)
 	   (- (pos-y owner) 10)
-	   (+ 2 (random 4)))))
+	   (+ 4 (random 5)))))
 
 (defmethod emitter-formula ((p pos) (e bullet-emitter))
   (pos-up p (emitter-speed e)))
@@ -152,7 +162,8 @@
 (defparameter *mid-stars* (make-instance 'emitter :limit 10 :speed 4))
 (defparameter *near-stars* (make-instance 'emitter :limit 5 :speed 8))
 (defparameter *meteors* (make-instance 'meteor-emitter :limit 4 :speed 3))
-(defparameter *starship-weapon* (make-instance 'bullet-emitter :limit 10 :speed 10 :owner *starship*))
+(defparameter *enemies* (make-instance 'enemies-emitter :limit 3 :speed 4))
+(defparameter *starship-weapon* (make-instance 'bullet-emitter :limit 20 :speed 15 :owner *starship*))
 
 ;;; Game
 ;;; ====
@@ -161,12 +172,19 @@
                         *starship-state*
                         #'(lambda () (emitter-emit *starship-weapon*)))
 
+  (emitter-step *enemies*)
   (emitter-step *meteors*)
   (emitter-step *far-stars*)
   (emitter-step *mid-stars*)
   (emitter-step *near-stars*)
   (emitter-move *starship-weapon*)
+
   (emitter-remove-collisions *starship-weapon* *meteors*)
+  (emitter-remove-collisions *starship-weapon* *enemies*)
+
+  (when (find-collisions *starship* *enemies*)
+    (setf *game-over* t))
+
   (when (find-collisions *starship* *meteors*)
     (setf *game-over* t)))
 
@@ -178,6 +196,7 @@
 
 (defparameter *sdl-brown* (sdl:color :r 140 :g 90 :b 90))
 (defparameter *sdl-orange* (sdl:color :r 255 :g 200 :b 100))
+(defparameter *sdl-yellow* (sdl:color :r 200 :g 100 :b 50))
 (defparameter *game-over* nil)
 
 (defun mouse-rect-2d ()
@@ -257,6 +276,7 @@
        (emitter-draw sdl:*cyan*  *mid-stars*)
        (emitter-draw sdl:*white* *near-stars*)
        (emitter-draw *sdl-brown* *meteors*)
+       (emitter-draw *sdl-yellow* *enemies*)
        (emitter-draw sdl:*red* *starship-weapon*)
 
        (pos-draw *starship*)
@@ -307,3 +327,5 @@
      (pos-draw star))))
 
 (mouse-rect-2d)
+
+
