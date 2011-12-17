@@ -1,0 +1,34 @@
+;;; Starship
+;;; ========
+(defclass starship (actor)
+  ((boost :initform 5
+	  :initarg :boost
+	  :accessor starship-boost)))
+
+(defmethod starship-speed (boost-p (ship starship))
+  (if boost-p (starship-boost ship) 1))
+
+(defmethod starship-move (x y (ship starship))
+  (setf (pos-x ship) x)
+  (setf (pos-y ship) y))
+
+(defmethod starship-fly (pos-move boost-p (ship starship))
+  (funcall pos-move
+	   ship
+	   (starship-speed boost-p ship)))
+
+(defmethod starship-up (boost-p (ship starship))
+  (starship-fly #'pos-up boost-p ship))
+
+(defmethod starship-down (boost-p (ship starship))
+  (starship-fly #'pos-down boost-p ship))
+
+(defmethod starship-left (boost-p (ship starship))
+  (starship-fly #'pos-left boost-p ship))
+
+(defmethod starship-right (boost-p (ship starship))
+  (starship-fly #'pos-right boost-p ship))
+
+(defparameter *starship* 
+  (make-instance 'starship :x 100 :y 100 :radius 20))
+
